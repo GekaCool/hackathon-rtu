@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Exhibit Voice</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,700;1,500&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #17130f; --wall: #ece4d4; --wall-edge: #c9bea8; --gold: #c9a55a; --gold-d: #8e6d2e;
+    --text: #f3ecdf; --muted: #a89c88; --ink: #2a211a; --velvet: #7d1f24; --glow: 255,214,150;
+    --serif: 'Cormorant Garamond', Georgia, serif; --sans: Inter, system-ui, 'Segoe UI', sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; color: var(--text); font-family: var(--sans);
+    background: radial-gradient(ellipse at top, #2a2119, var(--bg) 70%) fixed;
+  }
+  header { padding: 22px 28px 6px; text-align: center; }
+  .museum { font-size: 11px; letter-spacing: 5px; color: var(--gold); text-transform: uppercase; }
+  h1 { margin: 4px 0 2px; font-family: var(--serif); font-size: 44px; font-weight: 700; letter-spacing: 1px; }
+  h1 span { color: var(--gold); font-style: italic; font-weight: 500; }
+  .tag { color: var(--muted); font-family: var(--serif); font-style: italic; font-size: 18px; }
+  main { display: flex; gap: 24px; padding: 14px 28px 28px; flex-wrap: wrap; justify-content: center; }
+
+  /* ---------- Gallery room (top-down floor plan) ---------- */
+  #room {
+    position: relative; flex: 1 1 720px; max-width: 1000px; height: 620px; min-width: 320px;
+    touch-action: none; overflow: hidden;
+    border: 16px solid var(--wall); border-radius: 4px;
+    box-shadow: 0 0 0 2px var(--wall-edge), 0 30px 60px rgba(0,0,0,.6), inset 0 0 60px rgba(0,0,0,.7);
+    background:
+      radial-gradient(ellipse at 50% 45%, rgba(var(--glow),.10), rgba(0,0,0,.55) 85%),
+      repeating-linear-gradient(0deg, transparent 0 138px, rgba(0,0,0,.28) 138px 140px),
+      repeating-linear-gradient(90deg, #7b5635 0 34px, #1e140d 34px 35px, #6c4a2d 35px 69px, #1e140d 69px 70px, #82603d 70px 104px, #1e140d 104px 105px);
+  }
+  .decor { position: absolute; pointer-events: none; z-index: 0; }
+  .painting {
+    top: 6px; width: 70px; height: 12px; background: linear-gradient(90deg, #3b4a5c, #8a6b3d, #4d3a2a);
+    border: 3px solid var(--gold); box-shadow: 0 6px 14px rgba(var(--glow),.25);
+  }
+  .painting.side { left: 6px; width: 12px; height: 70px; }
+  .painting.side.r { left: auto; right: 6px; }
+  .bench {
+    width: 120px; height: 34px; left: 50%; top: 50%; transform: translate(-50%,-50%);
+    background: repeating-linear-gradient(90deg, #3a2a1c 0 10px, #2c1f14 10px 12px); border-radius: 4px;
+    box-shadow: 0 8px 16px rgba(0,0,0,.5); opacity: .8;
+  }
+  .door { bottom: 0; left: 50%; transform: translateX(-50%); width: 130px; height: 5px; background: #1a120c; }
+  .door-label {
+    bottom: 10px; left: 50%; transform: translateX(-50%); font-size: 10px; letter-spacing: 4px; color: var(--wall);
+    opacity: .6; white-space: nowrap;
+  }
+  .room-title { left: 14px; bottom: 10px; font-family: var(--serif); font-style: italic; font-size: 15px; color: var(--wall); opacity: .55; }
+
+  /* Sound zones */
+  .ring { position: absolute; border-radius: 50%; transform: translate(-50%,-50%); pointer-events: none; z-index: 1; }
+  .ring.hear {
+    background: repeating-radial-gradient(circle, transparent 0 28px, rgba(var(--glow),.08) 28px 30px);
+    -webkit-mask: radial-gradient(circle, #000 40%, transparent 70%); mask: radial-gradient(circle, #000 40%, transparent 70%);
+  }
+  .ring.story { border: 2px dashed rgba(201,165,90,.6); }
+
+  /* Exhibits: plinth + glass vitrine + spotlight + brass placard */
+  .exhibit {
+    position: absolute; transform: translate(-50%,-50%); width: 104px; height: 104px; z-index: 2; user-select: none;
+    background: linear-gradient(145deg, #faf6ee, #d8cfbf); border-radius: 3px;
+    box-shadow: 6px 10px 18px rgba(0,0,0,.6), inset 0 0 0 1px rgba(0,0,0,.08);
+    display: grid; place-items: center;
+  }
+  .exhibit::before {
+    content: ""; position: absolute; inset: -70px; border-radius: 50%; z-index: -1;
+    background: radial-gradient(circle, rgba(var(--glow),.28), transparent 65%); transition: opacity .3s, transform .3s;
+    opacity: .6;
+  }
+  .exhibit .case {
+    width: 76px; height: 76px; display: grid; place-items: center; font-size: 42px;
+    background: linear-gradient(135deg, rgba(210,235,255,.55), rgba(180,210,235,.2) 50%, rgba(255,255,255,.5));
+    border: 1px solid rgba(120,150,170,.6); box-shadow: inset 0 0 12px rgba(255,255,255,.8);
+    transition: box-shadow .3s;
+  }
+  .exhibit .label {
+    position: absolute; top: 114px; white-space: nowrap; text-align: center; padding: 5px 12px 6px;
+    background: linear-gradient(180deg, #e2c47e, var(--gold) 45%, var(--gold-d)); color: var(--ink);
+    border-radius: 2px; box-shadow: 0 3px 8px rgba(0,0,0,.5); font-family: var(--serif); line-height: 1.1;
+  }
+  .label .no { font-family: var(--sans); font-size: 9px; letter-spacing: 2px; opacity: .75; display: block; }
+  .label .nm { font-size: 17px; font-weight: 700; }
+  .label .yr { font-size: 13px; font-style: italic; }
+  .exhibit.near::before { opacity: 1; transform: scale(1.1); }
+  .exhibit.telling::before { opacity: 1; transform: scale(1.3); background: radial-gradient(circle, rgba(var(--glow),.55), transparent 65%); }
+  .exhibit.telling .case { box-shadow: inset 0 0 12px #fff, 0 0 28px rgba(var(--glow),.9); }
+  .exhibit.telling .nm::after { content: " ♪"; }
+
+  /* Visitor */
+  #visitor {
+    position: absolute; width: 56px; height: 56px; transform: translate(-50%,-50%);
+    cursor: grab; z-index: 10; touch-action: none; filter: drop-shadow(0 6px 10px rgba(0,0,0,.7));
+  }
+  #visitor:active { cursor: grabbing; }
+  #visitor .waves { position: absolute; inset: -14px; border-radius: 50%; border: 2px solid rgba(var(--glow),.7); animation: pulse 1.8s infinite; }
+  @keyframes pulse { from { transform: scale(.6); opacity: 1; } to { transform: scale(1.5); opacity: 0; } }
+
+  /* ---------- Audio guide (side panel) ---------- */
+  aside {
+    flex: 0 1 320px; min-width: 280px; padding: 20px; border-radius: 28px; align-self: flex-start;
+    background: linear-gradient(160deg, #2b241d, #1b1612); border: 1px solid #3d3228;
+    box-shadow: 0 30px 60px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.06);
+  }
+  .device-top { text-align: center; font-size: 10px; letter-spacing: 4px; color: var(--gold); margin-bottom: 14px; }
+  aside h2 { margin: 18px 0 12px; font-family: var(--serif); font-size: 20px; font-weight: 700; color: var(--text); }
+  button#start {
+    width: 100%; padding: 14px; font: 600 15px var(--sans); letter-spacing: 1px; border: 0; border-radius: 40px;
+    background: linear-gradient(180deg, #e2c47e, var(--gold-d)); color: var(--ink); cursor: pointer;
+    box-shadow: 0 6px 16px rgba(201,165,90,.3);
+  }
+  button#start.on { background: #3a3027; color: var(--text); box-shadow: none; }
+  .meter { margin-bottom: 14px; }
+  .meter .row { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 5px; }
+  .bar { height: 6px; background: #3a3027; border-radius: 3px; overflow: hidden; }
+  .bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--gold-d), #f1d08a); transition: width .08s; }
+  .state { font-size: 12px; color: var(--muted); }
+  #nowPlaying {
+    margin-top: 18px; padding: 14px 16px; min-height: 90px; border-radius: 4px;
+    background: var(--wall); color: var(--ink); font-family: var(--serif); font-size: 16px; line-height: 1.35;
+    box-shadow: inset 0 0 0 1px var(--wall-edge);
+  }
+  #nowPlaying b { color: var(--velvet); }
+  .hint { margin-top: 14px; font-size: 12px; color: var(--muted); line-height: 1.6; }
+  .hint i { font-family: var(--serif); font-size: 14px; color: var(--gold); }
+</style>
+</head>
+<body>
+<header>
+  <div class="museum">Museum of Everyday Inventions · Gallery I</div>
+  <h1>Exhibit <span>Voice</span></h1>
+  <div class="tag">Exhibits that speak as you approach — drag the visitor through the hall</div>
+</header>
+<main>
+  <div id="room">
+    <div class="decor painting" style="left:10%"></div>
+    <div class="decor painting" style="left:44%"></div>
+    <div class="decor painting" style="left:66%"></div>
+    <div class="decor painting side" style="top:52%"></div>
+    <div class="decor painting side r" style="top:60%"></div>
+    <div class="decor bench"></div>
+    <div class="decor door"></div>
+    <div class="decor door-label">ENTRANCE</div>
+    <div class="decor room-title">Hall of Inventions</div>
+    <div id="visitor">
+      <div class="waves"></div>
+      <svg viewBox="0 0 56 56" width="56" height="56">
+        <circle cx="28" cy="28" r="26" fill="#f3ecdf" stroke="#c9a55a" stroke-width="3"/>
+        <circle cx="28" cy="19" r="7" fill="#1a1520"/>
+        <path d="M15 43c1-9 6-14 13-14s12 5 13 14z" fill="#1a1520"/>
+        <rect x="18" y="16" width="3" height="9" rx="1.5" fill="#7d1f24"/>
+        <rect x="35" y="16" width="3" height="9" rx="1.5" fill="#7d1f24"/>
+        <path d="M19.5 16a8.5 8.5 0 0 1 17 0" stroke="#7d1f24" stroke-width="2.5" fill="none"/>
+      </svg>
+    </div>
+  </div>
+  <aside>
+    <div class="device-top">◉ AUDIO GUIDE</div>
+    <button id="start">▶ Start audio</button>
+    <h2>What the visitor hears</h2>
+    <div id="meters"></div>
+    <div id="nowPlaying">Drag the visitor toward an exhibit…</div>
+    <div class="hint">
+      Soft ripples = hearing range (sound grows louder).<br>
+      Gold dashed circle = story zone (the exhibit speaks).<br>
+      <i>In production, BLE beacons provide the position; here the operator plays the beacon.</i>
+    </div>
+  </aside>
+</main>
+
+<script>
+// ===== CONFIG: drop your audio files into ./audio/ with these names (optional) =====
+// If a file is missing, a synthesized ambient sound / browser voice is used instead.
+const EXHIBITS = [
+  { id: 'bulb', name: 'Light Bulb', emoji: '💡', year: 'c. 1879', x: 0.20, y: 0.28,
+    ambientFile: 'audio/freesound_community-ding-idea-40142.mp3', storyFile: 'audio/The History Of The Lightbulb.mp3',
+    storyText: "Hello! I am the light bulb. Before me, people lit their homes with candles and gas lamps. In 1879 Thomas Edison tested thousands of materials until a carbon filament glowed for hours. Today, I changed how the whole world lives after dark." },
+  { id: 'hammer', name: 'Hammer', emoji: '🔨', year: 'Prehistory', x: 0.78, y: 0.30,
+    ambientFile: 'audio/freesound_community-hammer-6145.mp3', storyFile: null,
+    storyText: "Clang! I am the hammer, one of humanity's oldest tools. Over two million years ago our ancestors struck stones together. Later, blacksmiths used me to forge swords, horseshoes and the tools that built cities." },
+  { id: 'glasses', name: 'Glasses', emoji: '👓', year: 'c. 1290', x: 0.50, y: 0.78,
+    ambientFile: 'audio/glass.mp3', storyFile: null,
+    storyText: "Hi, I am a pair of glasses. I was invented in Italy around the year 1290. Before me, people who could not see well simply had to stop reading. I helped scholars and monks keep working for many more years." },
+];
+const HEAR_RADIUS = 260;   // px: start hearing ambient
+const STORY_RADIUS = 80;   // px: story begins
+const STORY_EXIT = 110;    // px: leaving this far stops the story
+
+// ===== DOM setup =====
+const room = document.getElementById('room');
+const visitor = document.getElementById('visitor');
+const meters = document.getElementById('meters');
+const nowPlaying = document.getElementById('nowPlaying');
+const startBtn = document.getElementById('start');
+
+EXHIBITS.forEach((ex, i) => {
+  ex.hearRing = Object.assign(document.createElement('div'), { className: 'ring hear' });
+  ex.storyRing = Object.assign(document.createElement('div'), { className: 'ring story' });
+  ex.el = document.createElement('div');
+  ex.el.className = 'exhibit';
+  ex.el.innerHTML = `<div class="case">${ex.emoji}</div><div class="label"><span class="no">NO. 0${i + 1}</span><span class="nm">${ex.name}</span><br><span class="yr">${ex.year}</span></div>`;
+  room.append(ex.hearRing, ex.storyRing, ex.el);
+  const m = document.createElement('div');
+  m.className = 'meter';
+  m.innerHTML = `<div class="row"><span>${ex.emoji} ${ex.name}</span><span class="state">silent</span></div><div class="bar"><i></i></div>`;
+  meters.append(m);
+  ex.barEl = m.querySelector('i');
+  ex.stateEl = m.querySelector('.state');
+  ex.telling = false;
+});
+
+let vx = 0, vy = 0;
+function layout() {
+  const w = room.clientWidth, h = room.clientHeight;
+  EXHIBITS.forEach(ex => {
+    ex.px = ex.x * w; ex.py = ex.y * h;
+    for (const [el, r] of [[ex.el, 0], [ex.hearRing, HEAR_RADIUS], [ex.storyRing, STORY_RADIUS]]) {
+      el.style.left = ex.px + 'px'; el.style.top = ex.py + 'px';
+      if (r) { el.style.width = el.style.height = r * 2 + 'px'; }
+    }
+  });
+  if (!vx) { vx = w * 0.5; vy = h * 0.45; }
+  vx = Math.min(Math.max(vx, 20), w - 20); vy = Math.min(Math.max(vy, 20), h - 20);
+  placeVisitor();
+}
+function placeVisitor() { visitor.style.left = vx + 'px'; visitor.style.top = vy + 'px'; update(); }
+window.addEventListener('resize', layout);
+
+// ===== Dragging (mouse + touch) =====
+let dragging = false, offX = 0, offY = 0;
+visitor.addEventListener('pointerdown', e => {
+  dragging = true; visitor.setPointerCapture(e.pointerId);
+  const r = room.getBoundingClientRect();
+  offX = e.clientX - r.left - vx; offY = e.clientY - r.top - vy;
+});
+visitor.addEventListener('pointermove', e => {
+  if (!dragging) return;
+  const r = room.getBoundingClientRect();
+  vx = Math.min(Math.max(e.clientX - r.left - offX, 20), r.width - 20);
+  vy = Math.min(Math.max(e.clientY - r.top - offY, 20), r.height - 20);
+  placeVisitor();
+});
+visitor.addEventListener('pointerup', () => dragging = false);
+// Click anywhere in the room to jump there
+room.addEventListener('pointerdown', e => {
+  if (e.target.closest('#visitor')) return;
+  const r = room.getBoundingClientRect();
+  vx = e.clientX - r.left; vy = e.clientY - r.top; placeVisitor();
+});
+
+// ===== Audio =====
+let ctx = null, audioOn = false;
+
+function fileExists(src) {
+  return new Promise(res => {
+    if (!src) return res(null);
+    const a = new Audio();
+    a.oncanplaythrough = () => res(a);
+    a.onerror = () => res(null);
+    a.src = src;
+    setTimeout(() => res(null), 2500);
+  });
+}
+
+// Synthesized fallback ambients
+function synthAmbient(ex, out) {
+  if (ex.id === 'bulb') {            // electric hum with flicker
+    const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 900;
+    [100, 200, 300].forEach((fr, i) => {
+      const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = fr;
+      const g = ctx.createGain(); g.gain.value = 0.25 / (i + 1);
+      o.connect(g).connect(f); o.start();
+    });
+    const flick = ctx.createGain(); flick.gain.value = 0.6;
+    const lfo = ctx.createOscillator(); lfo.frequency.value = 7;
+    const lfoG = ctx.createGain(); lfoG.gain.value = 0.25;
+    lfo.connect(lfoG).connect(flick.gain); lfo.start();
+    f.connect(flick).connect(out);
+  } else if (ex.id === 'hammer') {   // rhythmic anvil strikes
+    const strike = () => {
+      const t = ctx.currentTime;
+      [880, 1320, 2150].forEach(fr => {
+        const o = ctx.createOscillator(); o.frequency.value = fr * (0.98 + Math.random() * 0.04);
+        const g = ctx.createGain(); g.gain.setValueAtTime(0.35, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.9);
+        o.connect(g).connect(out); o.start(t); o.stop(t + 1);
+      });
+      const n = ctx.createBufferSource(); n.buffer = noiseBuf;
+      const ng = ctx.createGain(); ng.gain.setValueAtTime(0.6, t); ng.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+      n.connect(ng).connect(out); n.start(t); n.stop(t + 0.1);
+    };
+    setInterval(strike, 900);
+  } else {                           // glassy shimmer / clinks
+    const ping = () => {
+      const t = ctx.currentTime, fr = 1800 + Math.random() * 2200;
+      const o = ctx.createOscillator(); o.frequency.value = fr;
+      const g = ctx.createGain(); g.gain.setValueAtTime(0.25, t); g.gain.exponentialRampToValueAtTime(0.001, t + 1.5);
+      o.connect(g).connect(out); o.start(t); o.stop(t + 1.6);
+    };
+    setInterval(() => { if (Math.random() < 0.7) ping(); }, 350);
+  }
+}
+let noiseBuf;
+
+async function initAudio() {
+  ctx = new (window.AudioContext || window.webkitAudioContext)();
+  noiseBuf = ctx.createBuffer(1, ctx.sampleRate * 0.2, ctx.sampleRate);
+  const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+
+  for (const ex of EXHIBITS) {
+    ex.gain = ctx.createGain(); ex.gain.gain.value = 0;
+    ex.pan = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
+    ex.pan ? ex.gain.connect(ex.pan).connect(ctx.destination) : ex.gain.connect(ctx.destination);
+
+    const amb = await fileExists(ex.ambientFile);
+    if (amb) { ex.ambientAudio = amb; amb.loop = true; amb.volume = 0; amb.play(); }
+    else synthAmbient(ex, ex.gain);
+
+    ex.storyAudio = await fileExists(ex.storyFile);
+    if (ex.storyAudio) ex.storyAudio.loop = true;   // story repeats while visitor stays in the zone
+  }
+}
+
+function startStory(ex) {
+  ex.telling = true;
+  nowPlaying.innerHTML = `<b>${ex.emoji} ${ex.name} is speaking…</b><br>${ex.storyText}`;
+  if (ex.storyAudio) { ex.storyAudio.currentTime = 0; ex.storyAudio.play(); }
+  else if ('speechSynthesis' in window) {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(ex.storyText);
+    u.rate = 0.95; u.onend = () => { if (ex.telling) speechSynthesis.speak(u); };   // loop
+    speechSynthesis.speak(u);
+  }
+}
+function stopStory(ex) {
+  ex.telling = false;
+  if (ex.storyAudio) ex.storyAudio.pause();
+  else if ('speechSynthesis' in window) speechSynthesis.cancel();
+  nowPlaying.textContent = 'Story paused — walk back to hear it again.';
+}
+
+// ===== Distance → volume =====
+function update() {
+  EXHIBITS.forEach(ex => {
+    const d = Math.hypot(vx - ex.px, vy - ex.py);
+    let vol = Math.max(0, 1 - d / HEAR_RADIUS); vol = vol * vol;   // smooth falloff
+    const anyStory = EXHIBITS.some(e => e.telling);
+    const ambVol = ex.telling ? 0 : anyStory ? vol * 0.15 : vol;     // silence own ambient, duck others under story
+
+    if (audioOn) {
+      if (ex.ambientAudio) ex.ambientAudio.volume = Math.min(1, ambVol);
+      else ex.gain.gain.setTargetAtTime(ambVol * 0.6, ctx.currentTime, 0.05);
+      if (ex.pan) ex.pan.pan.setTargetAtTime(Math.max(-1, Math.min(1, (ex.px - vx) / HEAR_RADIUS)), ctx.currentTime, 0.05);
+
+      if (!ex.telling && d < STORY_RADIUS) {
+        EXHIBITS.forEach(o => o !== ex && o.telling && stopStory(o));
+        startStory(ex);
+      } else if (ex.telling && d > STORY_EXIT) stopStory(ex);
+    }
+
+    ex.barEl.style.width = (vol * 100).toFixed(0) + '%';
+    ex.el.classList.toggle('near', vol > 0);
+    ex.el.classList.toggle('telling', ex.telling);
+    ex.stateEl.textContent = ex.telling ? '🗣 telling story' : d < STORY_RADIUS ? 'story zone' : vol > 0 ? `ambient ${(vol * 100) | 0}%` : 'silent';
+  });
+}
+
+async function toggleAudio(forceOn) {
+  if (starting) return;
+  if (!ctx) { starting = true; startBtn.textContent = 'Loading…'; await initAudio(); starting = false; }
+  audioOn = forceOn ? true : !audioOn;
+  if (audioOn) { ctx.resume(); EXHIBITS.forEach(e => e.ambientAudio && e.ambientAudio.play()); }
+  else {
+    ctx.suspend(); EXHIBITS.forEach(e => { e.ambientAudio && e.ambientAudio.pause(); e.telling && stopStory(e); });
+  }
+  startBtn.textContent = audioOn ? '⏸ Mute audio' : '▶ Start audio';
+  startBtn.classList.toggle('on', audioOn);
+  update();
+}
+let starting = false;
+startBtn.addEventListener('click', () => toggleAudio());
+// Pressing anywhere in the room turns audio on automatically
+room.addEventListener('pointerdown', () => { if (!audioOn) toggleAudio(true); });
+
+layout();
+</script>
+</body>
+</html>
